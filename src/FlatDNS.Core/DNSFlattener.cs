@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace FlatDNS.Core
@@ -22,12 +23,13 @@ namespace FlatDNS.Core
 
 		private async Task UpdateRecordSet(RecordSet set)
 		{
-			TargetRecord[] newAdresses = await _resolver.ResolveNameAsync(set.Target, set.RecordType);
+			List<TargetRecord> newAdresses = await _resolver.ResolveNameAsync(set.Target, set.RecordType);
 			
-			if (set.Adresses.Length != newAdresses.Length ||
+			if (set.Adresses.Length != newAdresses.Count ||
 				set.Adresses.OrderBy(x=>x).SequenceEqual(newAdresses.Select(x=>x.Address).OrderBy(x=>x)))
 			{
-				await _zone.UpdateRecordSetAsync(set, newAdresses);
+				// Fix this!
+				await _zone.UpdateRecordSetAsync(set, newAdresses.ToArray());
 			}
 		}
 	}

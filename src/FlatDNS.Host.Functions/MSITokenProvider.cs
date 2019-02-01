@@ -8,8 +8,11 @@ namespace FlatDNS.Host.Functions
 {
 	internal class MSITokenProvider : ITokenProvider
 	{
+		private const string BearerAuthenticationScheme = "Bearer";
+
 		private readonly AzureServiceTokenProvider _tokenProvider;
 		private readonly string _resource;
+
 		public MSITokenProvider(string resouce)
 		{
 			_tokenProvider = new AzureServiceTokenProvider();
@@ -19,7 +22,7 @@ namespace FlatDNS.Host.Functions
 		{
 			string token = await _tokenProvider.GetAccessTokenAsync(_resource);
 
-			return new AuthenticationHeaderValue("Bearer", token);
+			return new AuthenticationHeaderValue(BearerAuthenticationScheme, token);
 		}
 
 		public static MSITokenProvider ForARM() => new MSITokenProvider("https://management.core.windows.net/");

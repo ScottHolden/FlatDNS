@@ -54,7 +54,7 @@ namespace FlatDNS.Host.Functions
 			string resolverName = GetAppSetting(ResolverNameSetting);
 
 			if (resolverName.Equals("SystemDNS", StringComparison.OrdinalIgnoreCase))
-				return new SystemDNSResolver();
+				return new SystemDNSResolver(new LocalDNS());
 
 			if (resolverName.Equals("GoogleDNSOverHttp", StringComparison.OrdinalIgnoreCase))
 				return new GoogleDNSOverHttpResolver();

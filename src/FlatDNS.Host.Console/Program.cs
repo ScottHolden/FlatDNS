@@ -13,7 +13,7 @@ namespace FlatDNS.Host.Console
 			string subscriptionId = "";
 
 			IZone zone = new AzureDNSZone(new TokenCredentials(token), subscriptionId);
-			IResolver resolver = new GoogleDNSOverHttpResolver();
+			IResolver resolver = new SystemDNSResolver(new LocalDNS());
 
 			new DNSFlattener(zone, resolver).ExecuteAsync().GetAwaiter().GetResult();
 		}
