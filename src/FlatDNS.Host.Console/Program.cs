@@ -5,10 +5,10 @@ using Microsoft.Rest;
 
 namespace FlatDNS.Host.Console
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
+	internal class Program
+	{
+		private static void Main(string[] args)
+		{
 			string token = "";
 			string subscriptionId = "";
 
@@ -17,5 +17,5 @@ namespace FlatDNS.Host.Console
 
 			new DNSFlattener(zone, resolver).ExecuteAsync().GetAwaiter().GetResult();
 		}
-    }
+	}
 }

@@ -29,5 +29,4 @@ namespace FlatDNS.Resolver
 			return JsonConvert.DeserializeObject<Response>(json);
 		}
 	}
-
 }

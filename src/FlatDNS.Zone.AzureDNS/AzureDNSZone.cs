@@ -16,6 +16,7 @@ namespace FlatDNS.Zone
 		public const string RecordTargetTag = "flatdns.target";
 
 		private readonly DnsManagementClient _dnsClient;
+
 		public AzureDNSZone(ServiceClientCredentials credentials, string subscriptionId)
 		{
 			_dnsClient = new DnsManagementClient(credentials)
@@ -55,13 +56,13 @@ namespace FlatDNS.Zone
 
 		private string[] ParseAdresses(RecordSet set, FlatRecordType type)
 		{
-			if(type == FlatRecordType.A) return set.ARecords.Select(x => x.Ipv4Address).ToArray();
+			if (type == FlatRecordType.A) return set.ARecords.Select(x => x.Ipv4Address).ToArray();
 			if (type == FlatRecordType.AAAA) return set.AaaaRecords.Select(x => x.Ipv6Address).ToArray();
 			throw null;
 		}
 
 		private Task<List<Microsoft.Azure.Management.Dns.Models.Zone>> ListFlatDNSEnabledZones() =>
-			ListAllPagesWithFilter(() => _dnsClient.Zones.ListAsync(), 
+			ListAllPagesWithFilter(() => _dnsClient.Zones.ListAsync(),
 				next => _dnsClient.Zones.ListNextAsync(next),
 				x => x.Tags.ContainsKey(ZoneEnableTag) && x.Tags[ZoneEnableTag].Equals("true", StringComparison.OrdinalIgnoreCase));
 
@@ -103,6 +104,7 @@ namespace FlatDNS.Zone
 			// ETag will throw here
 			return _dnsClient.RecordSets.UpdateAsync(s[4], s[8], s[10], recordType, record, set.ETag);
 		}
+
 		private static RecordSet BuildRecordSet(FlatRecordSet set, FlatTargetRecord[] addresses)
 		{
 			// Need to assert address length, and record type
@@ -112,7 +114,6 @@ namespace FlatDNS.Zone
 			if (set.RecordType == FlatRecordType.A)
 			{
 				record.ARecords = addresses.Select(x => new ARecord(x.Address)).ToList();
-
 			}
 			else if (set.RecordType == FlatRecordType.AAAA)
 			{

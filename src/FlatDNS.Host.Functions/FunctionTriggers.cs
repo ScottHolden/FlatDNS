@@ -12,18 +12,18 @@ using Microsoft.Rest;
 namespace FlatDNS.Host.Functions
 {
 	public static class FunctionTriggers
-    {
+	{
 		private const string ResolverNameSetting = "ResovlerName";
 		private const string TargetSubscriptionIDSetting = "TargetSubscriptionID";
 		private static readonly Lazy<DNSFlattener> _flat = new Lazy<DNSFlattener>(BuildDNSFlattener);
 
-        [FunctionName(nameof(TimerTrigger))]
-        public static Task TimerTrigger(
+		[FunctionName(nameof(TimerTrigger))]
+		public static Task TimerTrigger(
 			[TimerTrigger("0 */5 * * * *")]
-				TimerInfo myTimer, 
+				TimerInfo myTimer,
 			ILogger log)
-        {
-            log.LogInformation($"Timer trigger executed at: {DateTime.Now}");
+		{
+			log.LogInformation($"Timer trigger executed at: {DateTime.Now}");
 
 			return _flat.Value.ExecuteAsync();
 		}
@@ -31,7 +31,7 @@ namespace FlatDNS.Host.Functions
 		[FunctionName(nameof(ManualHttpTrigger))]
 		public static Task ManualHttpTrigger(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "manual")]
-				HttpRequest req, 
+				HttpRequest req,
 			ILogger log)
 		{
 			log.LogInformation($"Manual HTTP trigger executed at: {DateTime.Now}");

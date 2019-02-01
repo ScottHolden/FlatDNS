@@ -15,7 +15,7 @@ namespace FlatDNS.Resolver
 			_localDNS = localDNS;
 		}
 
-		public SystemDNSResolver() : this (new LocalDNS())
+		public SystemDNSResolver() : this(new LocalDNS())
 		{
 		}
 

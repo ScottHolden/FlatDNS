@@ -1,7 +1,7 @@
 ﻿namespace FlatDNS.Core
 {
-    public class FlatTargetRecord
-    {
+	public class FlatTargetRecord
+	{
 		public long? TTL { get; }
 		public string Address { get; }
 
@@ -15,5 +15,5 @@
 		{
 			Address = address;
 		}
-    }
+	}
 }

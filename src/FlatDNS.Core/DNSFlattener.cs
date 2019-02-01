@@ -4,10 +4,11 @@ using System.Threading.Tasks;
 
 namespace FlatDNS.Core
 {
-    public class DNSFlattener
-    {
+	public class DNSFlattener
+	{
 		private readonly IZone _zone;
 		private readonly IResolver _resolver;
+
 		public DNSFlattener(IZone zone, IResolver resolver)
 		{
 			_zone = zone;
@@ -24,9 +25,9 @@ namespace FlatDNS.Core
 		private async Task UpdateRecordSet(FlatRecordSet set)
 		{
 			List<FlatTargetRecord> newAdresses = await _resolver.ResolveNameAsync(set.Target, set.RecordType);
-			
+
 			if (set.Adresses.Length != newAdresses.Count ||
-				set.Adresses.OrderBy(x=>x).SequenceEqual(newAdresses.Select(x=>x.Address).OrderBy(x=>x)))
+				set.Adresses.OrderBy(x => x).SequenceEqual(newAdresses.Select(x => x.Address).OrderBy(x => x)))
 			{
 				// Fix this!
 				await _zone.UpdateRecordSetAsync(set, newAdresses.ToArray());

@@ -18,6 +18,7 @@ namespace FlatDNS.Host.Functions
 			_tokenProvider = new AzureServiceTokenProvider();
 			_resource = resouce;
 		}
+
 		public async Task<AuthenticationHeaderValue> GetAuthenticationHeaderAsync(CancellationToken cancellationToken)
 		{
 			string token = await _tokenProvider.GetAccessTokenAsync(_resource);

@@ -8,15 +8,33 @@ using Xunit;
 
 namespace FlatDNS.Resolver.SystemDNS.Tests
 {
-    public class SystemDNSResolverUnitTests
-    {
+	public class SystemDNSResolverTests
+	{
 		private const string IPv4Address = "200.128.42.6";
 		private const string IPv6Address = "2001:db8:85a3::8a2e:370:7334";
+
+		[Fact]
+		public async Task ResolveNameAsync_SingleAddress_TTLIsNull()
+		{
+			// Arrange
+
+			Mock<ILocalDNS> mockLocalDNS = BuildMockLocalDNS(IPv4Address);
+
+			SystemDNSResolver resolver = new SystemDNSResolver(mockLocalDNS.Object);
+
+			// Act
+
+			List<FlatTargetRecord> result = await resolver.ResolveNameAsync(It.IsAny<string>(), FlatRecordType.A);
+
+			// Assert
+
+			Assert.False(result.Single().TTL.HasValue);
+		}
 
 		[Theory]
 		[InlineData(IPv4Address, FlatRecordType.A)]
 		[InlineData(IPv6Address, FlatRecordType.AAAA)]
-		public async Task SingleAddressCorrectRecordType(string address, FlatRecordType recordType)
+		public async Task ResolveNameAsync_SingleAddressCorrectRecordType_HasAdress(string address, FlatRecordType recordType)
 		{
 			// Arrange
 
@@ -30,15 +48,13 @@ namespace FlatDNS.Resolver.SystemDNS.Tests
 
 			// Assert
 
-			Assert.Single(result);
-			Assert.Equal(address, result[0].Address);
-			Assert.Null(result[0].TTL);
+			Assert.Equal(address, result.Single().Address);
 		}
 
 		[Theory]
 		[InlineData(IPv4Address, FlatRecordType.AAAA)]
 		[InlineData(IPv6Address, FlatRecordType.A)]
-		public async Task SingleAddressIncorrectRecordType(string address, FlatRecordType recordType)
+		public async Task ResolveNameAsync_SingleAddressIncorrectRecordType_DoesNotIncludeIncorrectRecords(string address, FlatRecordType recordType)
 		{
 			// Arrange
 
@@ -58,7 +74,7 @@ namespace FlatDNS.Resolver.SystemDNS.Tests
 		[Theory]
 		[InlineData(IPv4Address, FlatRecordType.A)]
 		[InlineData(IPv6Address, FlatRecordType.AAAA)]
-		public async Task MixedAddressAndRecordTypes(string address, FlatRecordType recordType)
+		public async Task ResolveNameAsync_MixedAddressAndRecordTypes_OnlyIncludesVaildRecords(string address, FlatRecordType recordType)
 		{
 			// Arrange
 			Mock<ILocalDNS> mockLocalDNS = BuildMockLocalDNS(IPv4Address, IPv6Address);
@@ -71,9 +87,7 @@ namespace FlatDNS.Resolver.SystemDNS.Tests
 
 			// Assert
 
-			Assert.Single(result);
-			Assert.Equal(address, result[0].Address);
-			Assert.Null(result[0].TTL);
+			Assert.Equal(address, result.Single().Address);
 		}
 
 		private static Mock<ILocalDNS> BuildMockLocalDNS(params string[] addresses)

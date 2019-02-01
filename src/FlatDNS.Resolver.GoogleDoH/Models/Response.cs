@@ -29,5 +29,4 @@ namespace FlatDNS.Resolver
 			return records;
 		}
 	}
-
 }

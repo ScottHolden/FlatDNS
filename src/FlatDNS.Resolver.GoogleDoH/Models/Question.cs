@@ -6,8 +6,8 @@ namespace FlatDNS.Resolver
 	{
 		[JsonProperty("name")]
 		public string Name { get; set; }
+
 		[JsonProperty("type")]
 		public int Type { get; set; }
 	}
-
 }
