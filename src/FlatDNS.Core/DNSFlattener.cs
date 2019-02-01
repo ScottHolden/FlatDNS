@@ -41,8 +41,7 @@ namespace FlatDNS.Core
 				return;
 			}
 
-			// TODO: Fix this!
-			await _zone.UpdateRecordSetAsync(set, newAdresses.ToArray());
+			await _zone.UpdateRecordSetAsync(set, newAdresses);
 		}
 	}
 }

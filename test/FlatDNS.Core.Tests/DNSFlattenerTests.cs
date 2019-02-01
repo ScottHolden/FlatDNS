@@ -52,6 +52,10 @@ namespace FlatDNS.Core.Tests
 
 		public async Task ExecuteAsync_NewResolvedRecords_UpdateDNSZone(FlatRecordType recordType, string[] address1, string[] address2)
 		{
+			// Arrange
+
+			List<FlatTargetRecord> targetRecords = address2.Select(x => new FlatTargetRecord(x)).ToList();
+
 			Mock<IZone> zone = BuildZoneResolver(new FlatRecordSet
 			{
 				Adresses = address1,
@@ -59,13 +63,17 @@ namespace FlatDNS.Core.Tests
 				RecordType = recordType
 			});
 
-			Mock<IResolver> resolver = BuildMockResolver(HostName, recordType, address2);
+			Mock<IResolver> resolver = BuildMockResolver(HostName, recordType, targetRecords);
 
 			DNSFlattener flattener = new DNSFlattener(zone.Object, resolver.Object);
 
+			// Act
+
 			await flattener.ExecuteAsync();
 
-			zone.Verify(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), It.IsAny<FlatTargetRecord[]>()), Times.Once());
+			// Assert
+
+			zone.Verify(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), targetRecords), Times.Once());
 		}
 
 		[Theory]
@@ -75,6 +83,8 @@ namespace FlatDNS.Core.Tests
 		[InlineData(FlatRecordType.AAAA, IPv6Address1, IPv6Address2)]
 		public async Task ExecuteAsync_SameResolvedRecords_DoNotUpdateDNSZone(FlatRecordType recordType, params string[] address)
 		{
+			// Arrange
+
 			Mock<IZone> zone = BuildZoneResolver(new FlatRecordSet
 			{
 				Adresses = address,
@@ -86,9 +96,13 @@ namespace FlatDNS.Core.Tests
 
 			DNSFlattener flattener = new DNSFlattener(zone.Object, resolver.Object);
 
+			// Act
+
 			await flattener.ExecuteAsync();
 
-			zone.Verify(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), It.IsAny<FlatTargetRecord[]>()), Times.Never());
+			// Assert
+
+			zone.Verify(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), It.IsAny<List<FlatTargetRecord>>()), Times.Never());
 		}
 
 		[Theory]
@@ -96,6 +110,8 @@ namespace FlatDNS.Core.Tests
 		[InlineData(FlatRecordType.AAAA)]
 		public async Task ExecuteAsync_NoResolvedRecords_DoNotUpdateDNSZone(FlatRecordType recordType)
 		{
+			// Arrange
+
 			Mock<IZone> zone = BuildZoneResolver(new FlatRecordSet
 			{
 				Adresses = new[] { IPv4Address1 },
@@ -107,9 +123,13 @@ namespace FlatDNS.Core.Tests
 
 			DNSFlattener flattener = new DNSFlattener(zone.Object, resolver.Object);
 
+			// Act
+
 			await flattener.ExecuteAsync();
 
-			zone.Verify(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), It.IsAny<FlatTargetRecord[]>()), Times.Never());
+			// Assert
+
+			zone.Verify(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), It.IsAny<List<FlatTargetRecord>>()), Times.Never());
 		}
 
 		private static Mock<IZone> BuildZoneResolver(params FlatRecordSet[] recordSets)
@@ -119,7 +139,7 @@ namespace FlatDNS.Core.Tests
 			zone.Setup(x => x.ListRecordSetsAsync())
 				.ReturnsAsync(recordSets);
 
-			zone.Setup(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), It.IsAny<FlatTargetRecord[]>()))
+			zone.Setup(x => x.UpdateRecordSetAsync(It.IsAny<FlatRecordSet>(), It.IsAny<List<FlatTargetRecord>>()))
 				.Returns(Task.CompletedTask);
 
 			return zone;

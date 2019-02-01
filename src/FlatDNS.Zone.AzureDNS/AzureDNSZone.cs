@@ -92,7 +92,7 @@ namespace FlatDNS.Zone
 			return final;
 		}
 
-		public Task UpdateRecordSetAsync(FlatRecordSet set, FlatTargetRecord[] addresses)
+		public Task UpdateRecordSetAsync(FlatRecordSet set, List<FlatTargetRecord> addresses)
 		{
 			// If I ever find someone doing this in prod code, I'll be unhappy :P
 			string[] s = set.ID.Split('/');
@@ -105,7 +105,7 @@ namespace FlatDNS.Zone
 			return _dnsClient.RecordSets.UpdateAsync(s[4], s[8], s[10], recordType, record, set.ETag);
 		}
 
-		private static RecordSet BuildRecordSet(FlatRecordSet set, FlatTargetRecord[] addresses)
+		private static RecordSet BuildRecordSet(FlatRecordSet set, List<FlatTargetRecord> addresses)
 		{
 			// Need to assert address length, and record type
 
