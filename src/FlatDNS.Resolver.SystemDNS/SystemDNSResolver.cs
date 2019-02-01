@@ -19,7 +19,7 @@ namespace FlatDNS.Resolver
 		{
 		}
 
-		public async Task<List<TargetRecord>> ResolveNameAsync(string name, RecordType type)
+		public async Task<List<FlatTargetRecord>> ResolveNameAsync(string name, FlatRecordType type)
 		{
 			AddressFamily adressFamily = type.ToAddressFamily();
 

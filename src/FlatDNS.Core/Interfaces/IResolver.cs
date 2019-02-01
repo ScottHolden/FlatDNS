@@ -5,6 +5,6 @@ namespace FlatDNS.Core
 {
     public interface IResolver
     {
-		Task<List<TargetRecord>> ResolveNameAsync(string name, RecordType type);
+		Task<List<FlatTargetRecord>> ResolveNameAsync(string name, FlatRecordType type);
 	}
 }

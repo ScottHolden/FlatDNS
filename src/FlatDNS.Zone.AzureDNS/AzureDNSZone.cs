@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FlatDNS.Core;
 using Microsoft.Azure.Management.Dns;
+using Microsoft.Azure.Management.Dns.Models;
 using Microsoft.Rest;
 using Microsoft.Rest.Azure;
 
@@ -23,18 +24,18 @@ namespace FlatDNS.Zone
 			};
 		}
 
-		public async Task<RecordSet[]> ListRecordSetsAsync()
+		public async Task<FlatRecordSet[]> ListRecordSetsAsync()
 		{
 			List<Microsoft.Azure.Management.Dns.Models.Zone> enabledZones = await ListFlatDNSEnabledZones();
-			List<Microsoft.Azure.Management.Dns.Models.RecordSet>[] recordsWithTarget = await Task.WhenAll(enabledZones.Select(ListRecordsWithTargetAsync));
+			List<RecordSet>[] recordsWithTarget = await Task.WhenAll(enabledZones.Select(ListRecordsWithTargetAsync));
 			return recordsWithTarget.SelectMany(x => x).Select(ParseAzureRecordSet).ToArray();
 		}
 
-		private RecordSet ParseAzureRecordSet(Microsoft.Azure.Management.Dns.Models.RecordSet set)
+		private FlatRecordSet ParseAzureRecordSet(RecordSet set)
 		{
-			RecordType type = ParseType(set.Type);
+			FlatRecordType type = ParseType(set.Type);
 
-			return new RecordSet
+			return new FlatRecordSet
 			{
 				ID = set.Id,
 				ETag = set.Etag,
@@ -45,17 +46,17 @@ namespace FlatDNS.Zone
 			};
 		}
 
-		private RecordType ParseType(string type)
+		private FlatRecordType ParseType(string type)
 		{
-			if (type.Equals("Microsoft.Network/dnszones/A")) return RecordType.A;
-			if (type.Equals("Microsoft.Network/dnszones/AAAA")) return RecordType.AAAA;
+			if (type.Equals("Microsoft.Network/dnszones/A")) return FlatRecordType.A;
+			if (type.Equals("Microsoft.Network/dnszones/AAAA")) return FlatRecordType.AAAA;
 			throw null;
 		}
 
-		private string[] ParseAdresses(Microsoft.Azure.Management.Dns.Models.RecordSet set, RecordType type)
+		private string[] ParseAdresses(RecordSet set, FlatRecordType type)
 		{
-			if(type == RecordType.A) return set.ARecords.Select(x => x.Ipv4Address).ToArray();
-			if (type == RecordType.AAAA) return set.AaaaRecords.Select(x => x.Ipv6Address).ToArray();
+			if(type == FlatRecordType.A) return set.ARecords.Select(x => x.Ipv4Address).ToArray();
+			if (type == FlatRecordType.AAAA) return set.AaaaRecords.Select(x => x.Ipv6Address).ToArray();
 			throw null;
 		}
 
@@ -64,10 +65,10 @@ namespace FlatDNS.Zone
 				next => _dnsClient.Zones.ListNextAsync(next),
 				x => x.Tags.ContainsKey(ZoneEnableTag) && x.Tags[ZoneEnableTag].Equals("true", StringComparison.OrdinalIgnoreCase));
 
-		private Task<List<Microsoft.Azure.Management.Dns.Models.RecordSet>> ListRecordsWithTargetAsync(Microsoft.Azure.Management.Dns.Models.Zone zone) =>
+		private Task<List<RecordSet>> ListRecordsWithTargetAsync(Microsoft.Azure.Management.Dns.Models.Zone zone) =>
 			ListRecordsWithTargetAsync(zone.Id.Split('/')[4], zone.Name);
 
-		private Task<List<Microsoft.Azure.Management.Dns.Models.RecordSet>> ListRecordsWithTargetAsync(string resourceGroup, string zoneName) =>
+		private Task<List<RecordSet>> ListRecordsWithTargetAsync(string resourceGroup, string zoneName) =>
 			ListAllPagesWithFilter(() => _dnsClient.RecordSets.ListByDnsZoneAsync(resourceGroup, zoneName),
 				next => _dnsClient.RecordSets.ListAllByDnsZoneNextAsync(next),
 				x => x.Metadata.ContainsKey(RecordTargetTag) && !string.IsNullOrWhiteSpace(x.Metadata[RecordTargetTag]));
@@ -90,35 +91,41 @@ namespace FlatDNS.Zone
 			return final;
 		}
 
-		public async Task UpdateRecordSetAsync(RecordSet set, TargetRecord[] adresses)
+		public Task UpdateRecordSetAsync(FlatRecordSet set, FlatTargetRecord[] addresses)
 		{
-			// If i ever find someone doing this in prod code, I'll be unhappy :P
+			// If I ever find someone doing this in prod code, I'll be unhappy :P
 			string[] s = set.ID.Split('/');
 
-			Microsoft.Azure.Management.Dns.Models.RecordType recordType = Microsoft.Azure.Management.Dns.Models.RecordType.A;
-			Microsoft.Azure.Management.Dns.Models.RecordSet record = new Microsoft.Azure.Management.Dns.Models.RecordSet();
+			RecordType recordType = set.RecordType.ToAzureDnsRecordSet();
 
-			if (set.RecordType == RecordType.A)
+			RecordSet record = BuildRecordSet(set, addresses);
+
+			// ETag will throw here
+			return _dnsClient.RecordSets.UpdateAsync(s[4], s[8], s[10], recordType, record, set.ETag);
+		}
+		private static RecordSet BuildRecordSet(FlatRecordSet set, FlatTargetRecord[] addresses)
+		{
+			// Need to assert address length, and record type
+
+			RecordSet record = new RecordSet();
+
+			if (set.RecordType == FlatRecordType.A)
 			{
-				recordType = Microsoft.Azure.Management.Dns.Models.RecordType.A;
-				record.ARecords = adresses.Select(x => new Microsoft.Azure.Management.Dns.Models.ARecord(x.Address)).ToList();
+				record.ARecords = addresses.Select(x => new ARecord(x.Address)).ToList();
 
 			}
-			else if (set.RecordType == RecordType.AAAA)
+			else if (set.RecordType == FlatRecordType.AAAA)
 			{
-				recordType = Microsoft.Azure.Management.Dns.Models.RecordType.AAAA;
-				record.AaaaRecords = adresses.Select(x => new Microsoft.Azure.Management.Dns.Models.AaaaRecord(x.Address)).ToList();
+				record.AaaaRecords = addresses.Select(x => new AaaaRecord(x.Address)).ToList();
 			}
-			else return; // And just eat it.
 
 			if (set.TTL > 0)
 			{
-				long newTTL = adresses.Select(x => x.TTL ?? -1).Concat(new[] { set.TTL }).Where(x => x > 0).Min();
+				long newTTL = addresses.Select(x => x.TTL ?? -1).Concat(new[] { set.TTL }).Where(x => x > 0).Min();
 				record.TTL = newTTL;
 			}
 
-			// ETag will throw here
-			await _dnsClient.RecordSets.UpdateAsync(s[4], s[8], s[10], recordType, record, set.ETag);
+			return record;
 		}
 	}
 }

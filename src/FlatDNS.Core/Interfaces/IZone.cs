@@ -4,7 +4,7 @@ namespace FlatDNS.Core
 {
     public interface IZone
     {
-		Task<RecordSet[]> ListRecordSetsAsync();
-		Task UpdateRecordSetAsync(RecordSet set, TargetRecord[] adresses);
+		Task<FlatRecordSet[]> ListRecordSetsAsync();
+		Task UpdateRecordSetAsync(FlatRecordSet set, FlatTargetRecord[] adresses);
 	}
 }

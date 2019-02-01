@@ -13,29 +13,14 @@ namespace FlatDNS.Resolver
 
 		private static readonly HttpClient _httpClient = new HttpClient();
 
-		public async Task<List<TargetRecord>> ResolveNameAsync(string name, RecordType type)
+		public async Task<List<FlatTargetRecord>> ResolveNameAsync(string name, FlatRecordType type)
 		{
 			Response response = await ResolveAsync(name, type);
 
-			return ParseResponse(response, type);
+			return response.ToFlatTargetRecord(type);
 		}
 
-		private List<TargetRecord> ParseResponse(Response response, RecordType type)
-		{
-			List<TargetRecord> records = new List<TargetRecord>(response.Answer.Length);
-
-			foreach (Answer answer in response.Answer)
-			{
-				if (answer.Type == (int)type)
-				{
-					records.Add(new TargetRecord(answer.Data, answer.TTL));
-				}
-			}
-
-			return records;
-		}
-
-		private async Task<Response> ResolveAsync(string name, RecordType type)
+		private async Task<Response> ResolveAsync(string name, FlatRecordType type)
 		{
 			string endpoint = string.Format(GoogleAPI, name, type);
 

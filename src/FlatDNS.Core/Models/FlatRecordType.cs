@@ -1,6 +1,6 @@
 ﻿namespace FlatDNS.Core
 {
-	public enum RecordType
+	public enum FlatRecordType
 	{
 		A = 1,
 		AAAA = 28

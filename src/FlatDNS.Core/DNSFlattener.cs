@@ -16,14 +16,14 @@ namespace FlatDNS.Core
 
 		public async Task ExecuteAsync()
 		{
-			RecordSet[] recordSets = await _zone.ListRecordSetsAsync();
+			FlatRecordSet[] recordSets = await _zone.ListRecordSetsAsync();
 
 			await Task.WhenAll(recordSets.Select(UpdateRecordSet));
 		}
 
-		private async Task UpdateRecordSet(RecordSet set)
+		private async Task UpdateRecordSet(FlatRecordSet set)
 		{
-			List<TargetRecord> newAdresses = await _resolver.ResolveNameAsync(set.Target, set.RecordType);
+			List<FlatTargetRecord> newAdresses = await _resolver.ResolveNameAsync(set.Target, set.RecordType);
 			
 			if (set.Adresses.Length != newAdresses.Count ||
 				set.Adresses.OrderBy(x=>x).SequenceEqual(newAdresses.Select(x=>x.Address).OrderBy(x=>x)))
