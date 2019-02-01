@@ -19,6 +19,8 @@ namespace FlatDNS.Core
 		{
 			FlatRecordSet[] recordSets = await _zone.ListRecordSetsAsync();
 
+			if (recordSets == null || recordSets.Length < 1) return;
+
 			await Task.WhenAll(recordSets.Select(UpdateRecordSet));
 		}
 
@@ -26,12 +28,21 @@ namespace FlatDNS.Core
 		{
 			List<FlatTargetRecord> newAdresses = await _resolver.ResolveNameAsync(set.Target, set.RecordType);
 
-			if (set.Adresses.Length != newAdresses.Count ||
+			if (newAdresses == null || newAdresses.Count < 1)
+			{
+				// Couldn't resolve target
+				return;
+			}
+
+			if (set.Adresses.Length == newAdresses.Count &&
 				set.Adresses.OrderBy(x => x).SequenceEqual(newAdresses.Select(x => x.Address).OrderBy(x => x)))
 			{
-				// Fix this!
-				await _zone.UpdateRecordSetAsync(set, newAdresses.ToArray());
+				// Adresses are the same, no work to do
+				return;
 			}
+
+			// TODO: Fix this!
+			await _zone.UpdateRecordSetAsync(set, newAdresses.ToArray());
 		}
 	}
 }
